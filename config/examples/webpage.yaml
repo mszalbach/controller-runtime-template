@@ -1,0 +1,8 @@
+apiVersion: mszalbach.github.com/v1beta1
+kind: WebPage2
+metadata:
+  name: test-webpage
+  namespace: default
+spec:
+  image: nginx
+  content: this is a test

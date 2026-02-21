@@ -1,0 +1,42 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ivu-manager
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mszalbach.github.com
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - mszalbach.github.com
+  resources:
+  - '*/finalizers'
+  verbs:
+  - patch
+  - update
+- apiGroups:
+  - mszalbach.github.com
+  resources:
+  - '*/status'
+  verbs:
+  - get
+  - patch
+  - update
