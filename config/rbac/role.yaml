@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: ivu-manager
+  name: ivu-manager-role
 rules:
 - apiGroups:
   - apps

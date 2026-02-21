@@ -36,28 +36,17 @@ setup-envtest:
 golangci-lint:
 	GOBIN="$(LOCALBIN)" go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
-.PHONY: generate-crds
-generate-crds: controller-gen
-	$(CONTROLLER_GEN) crd paths=./api/... output:dir=./config/crd/bases
-
-
-.PHONY: generate-rbac
-generate-rbac: controller-gen
-	$(CONTROLLER_GEN) rbac:roleName=ivu-manager paths=./... output:dir=./config/rbac
-
-
-.PHONY: generate-deepcopy
-generate-deepcopy: controller-gen
-	$(CONTROLLER_GEN) object paths=./...
-
+.PHONY: manifests
+manifests: controller-gen
+	"$(CONTROLLER_GEN)" rbac:roleName=ivu-manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
-generate: generate-crds generate-rbac generate-deepcopy ## Auto generate everything
-
+generate: controller-gen
+	$(CONTROLLER_GEN) object paths=./...
 
 .PHONY: test 
-test: setup-envtest ## Run the tests 
-	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) -p path)" go test -v ./...
+test: setup-envtest manifests generate ## Run the tests 
+	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) --bin-dir "$(LOCALBIN)" -p path)" go test -v ./...
 
 .PHONY: test-short
 test-short:  ## Skips slow integration tests
@@ -65,7 +54,8 @@ test-short:  ## Skips slow integration tests
 
 .PHONY: clean
 clean: setup-envtest ## Clean up envtest binaries
-	$(ENVTEST) cleanup
+	$(ENVTEST) cleanup --bin-dir "$(LOCALBIN)"
+	rm -rf $(LOCALBIN)
 
 .PHONY: lint
 lint: golangci-lint ## Run linter
