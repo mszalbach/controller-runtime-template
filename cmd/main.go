@@ -6,26 +6,40 @@ import (
 
 	api "github.com/mszalbach/controller-runtime-template/api/v1beta1"
 	"github.com/mszalbach/controller-runtime-template/internal/controller"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-var setupLog = ctrl.Log.WithName("setup")
+var (
+	setupLog = ctrl.Log.WithName("setup")
+	scheme   = runtime.NewScheme()
+)
+
+func init() {
+	utilruntime.Must(api.AddToScheme(scheme))
+}
 
 func main() {
 	ctrl.SetLogger(zap.New())
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{})
-	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+	// TODO when more config is needed use flags, kong or viper
+	namespace := os.Getenv("WATCH_NAMESPACE")
+
+	defaultNamespaces := map[string]cache.Config{}
+
+	if namespace != "" {
+		defaultNamespaces[namespace] = cache.Config{}
 	}
 
-	// in a real controller, we'd create a new scheme for this
-	err = api.AddToScheme(mgr.GetScheme())
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{Scheme: scheme, Cache: cache.Options{
+		DefaultNamespaces: defaultNamespaces,
+	}})
 	if err != nil {
-		setupLog.Error(err, "unable to add scheme")
+		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
