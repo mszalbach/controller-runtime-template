@@ -5,8 +5,7 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	. "github.com/onsi/gomega"
 
 	api "github.com/mszalbach/controller-runtime-template/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -15,9 +14,8 @@ import (
 )
 
 // https://onsi.github.io/ginkgo/#writing-specs
-// TODO controller manuell testen und reconcile loop aufrufen, für mehr controlle
+// TODO not sure how this works with more tests and more controllers because of async?
 var _ = Describe("Application Controller", func() {
-	t := GinkgoT()
 	const (
 		timeout  = time.Second * 10
 		interval = time.Millisecond * 250
@@ -33,7 +31,7 @@ var _ = Describe("Application Controller", func() {
 					Name: "test-namespace",
 				},
 			}
-			require.NoError(t, k8sClient.Create(ctx, namespace))
+			Expect(k8sClient.Create(ctx, namespace)).To(Succeed())
 
 			// When
 			app := &api.WebPage{
@@ -45,28 +43,28 @@ var _ = Describe("Application Controller", func() {
 					Image: "nginx:latest",
 				},
 			}
-			require.NoError(t, k8sClient.Create(ctx, app))
+			Expect(k8sClient.Create(ctx, app)).To(Succeed())
 
 			// Then
 			pod := &corev1.Pod{}
-			assert.EventuallyWithT(t, func(c *assert.CollectT) {
-				err := k8sClient.Get(ctx, types.NamespacedName{
+
+			Eventually(func() error {
+				return k8sClient.Get(ctx, types.NamespacedName{
 					Name:      "test-app",
 					Namespace: "test-namespace",
 				}, pod)
-				assert.NoError(c, err)
-			}, timeout, interval)
+			}, timeout, interval).Should(Succeed())
 
 			// Verify pod
-			assert.Len(t, pod.Spec.Containers, 1)
-			assert.Equal(t, "nginx:latest", pod.Spec.Containers[0].Image)
-			assert.Equal(t, int32(80), pod.Spec.Containers[0].Ports[0].ContainerPort)
+			Expect(pod.Spec.Containers).To(HaveLen(1))
+			Expect(pod.Spec.Containers[0].Image).To(Equal("nginx:latest"))
+			Expect(pod.Spec.Containers[0].Ports[0].ContainerPort).To(Equal(int32(80)))
 
 			// Verify owner reference
 			// There is no garbage collector in env test so the pod can not be deleted when the app is deleted. So this reference check should be enough
-			assert.Len(t, pod.OwnerReferences, 1)
-			assert.Equal(t, "test-app", pod.OwnerReferences[0].Name)
-			assert.Equal(t, app.UID, pod.OwnerReferences[0].UID)
+			Expect(pod.OwnerReferences).To(HaveLen(1))
+			Expect(pod.OwnerReferences[0].Name).To(Equal("test-app"))
+			Expect(pod.OwnerReferences[0].UID).To(Equal(app.UID))
 		})
 	})
 })

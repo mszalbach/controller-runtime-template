@@ -6,8 +6,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	. "github.com/onsi/gomega"
 
 	api "github.com/mszalbach/controller-runtime-template/api/v1beta1"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -31,12 +30,11 @@ func TestControllers(t *testing.T) {
 	if testing.Short() {
 		t.Skip("-short was passed, skipping Controllers")
 	}
+	RegisterFailHandler(Fail)
 	RunSpecs(t, "Controller Suite")
 }
 
 var _ = BeforeSuite(func() {
-	t := GinkgoT()
-
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	ctx, cancel = context.WithCancel(context.TODO())
@@ -49,21 +47,21 @@ var _ = BeforeSuite(func() {
 
 	var err error
 	cfg, err = testEnv.Start()
-	require.NoError(t, err)
-	assert.NotNil(t, cfg)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cfg).ToNot(BeNil())
 
 	err = api.AddToScheme(scheme.Scheme)
-	require.NoError(t, err)
+	Expect(err).NotTo(HaveOccurred())
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	require.NoError(t, err)
-	assert.NotNil(t, k8sClient)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(k8sClient).ToNot(BeNil())
 
 	// Start controller manager
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: scheme.Scheme,
 	})
-	require.NoError(t, err)
+	Expect(err).NotTo(HaveOccurred())
 
 	// TODO move this to the test suite of the controller
 	// TODO install it or call it directly via reconcile, so it is possible to test the states between
@@ -71,19 +69,17 @@ var _ = BeforeSuite(func() {
 		Client: k8sManager.GetClient(),
 		Scheme: k8sManager.GetScheme(),
 	}).SetupWithManager(k8sManager)
-	require.NoError(t, err)
+	Expect(err).NotTo(HaveOccurred())
 
 	go func() {
 		defer GinkgoRecover()
 		err = k8sManager.Start(ctx)
-		assert.NoError(t, err, "failed to run manager")
+		Expect(err).NotTo(HaveOccurred())
 	}()
 })
 
 var _ = AfterSuite(func() {
-	t := GinkgoT()
 	cancel()
 	By("tearing down the test environment")
-	err := testEnv.Stop()
-	require.NoError(t, err)
+	Expect(testEnv.Stop()).To(Succeed())
 })
