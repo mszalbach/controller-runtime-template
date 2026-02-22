@@ -1,7 +1,5 @@
 # TODO
     * e2e tests with k3s?
-    * tool install like rabbitmq operator?
-  
 
 # Resources 
 
