@@ -3,6 +3,8 @@ LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
 	mkdir -p "$(LOCALBIN)"
 
+SHELL := bash
+
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
@@ -18,6 +20,8 @@ ENVTEST_K8S_VERSION = 1.35.0
 
 # renovate: datasource=github-tags depName=golangci/golangci-lint
 GOLANGCI_LINT_VERSION = v2.10.1
+
+.DEFAULT_GOAL = help
 
 .PHONY: help
 help: ## Display this help.

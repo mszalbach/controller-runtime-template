@@ -58,13 +58,12 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient).ToNot(BeNil())
 
 	// Start controller manager
+	// TODO maybe easier to install them in the test with a Cache label binding so the manager does not interfere with each other?
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: scheme.Scheme,
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	// TODO move this to the test suite of the controller
-	// TODO install it or call it directly via reconcile, so it is possible to test the states between
 	err = (&WebPageReconciler{
 		Client: k8sManager.GetClient(),
 		Scheme: k8sManager.GetScheme(),

@@ -14,7 +14,7 @@ import (
 )
 
 // Permissions needed for this controller
-// TODO erzeugt nur die Rolle aber nicht das Binding und die ServiceAccounts daher vermutlich nicht so hilfreich?
+// TODO generates the role but not the service account and role binding
 // +kubebuilder:rbac:groups=mszalbach.github.com,resources=*,verbs=get;list;watch;patch
 // +kubebuilder:rbac:groups=mszalbach.github.com,resources=*/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mszalbach.github.com,resources=*/finalizers,verbs=update;patch

@@ -14,7 +14,7 @@ import (
 )
 
 // https://onsi.github.io/ginkgo/#writing-specs
-// TODO not sure how this works with more tests and more controllers because of async?
+// TODO not sure how this works with more tests and more controllers to not interfere with each other.
 var _ = Describe("Application Controller", func() {
 	const (
 		timeout  = time.Second * 10
