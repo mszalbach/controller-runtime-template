@@ -1,18 +1,7 @@
 
 SHELL := bash
-platform := $(shell uname | tr A-Z a-z)
-ARCHITECTURE = $(shell go env GOARCH)
-
-LOCALBIN ?= $(shell pwd)/bin
-$(LOCALBIN):
-	mkdir -p "$(LOCALBIN)"
-
-ifeq ($(ARCHITECTURE),aarch64)
-	ARCHITECTURE=arm64
-endif
-
-export KUBEBUILDER_ASSETS = $(LOCALBIN)/k8s/$(ENVTEST_K8S_VERSION)-$(platform)-$(ARCHITECTURE)
-export PATH := $(LOCALBIN):$(PATH)
+ENVTEST_K8S_VERSION := 1.35.0
+KUBEBUILDER_PATH := $(shell setup-envtest use $(ENVTEST_K8S_VERSION) -i -p path)
 
 
 .DEFAULT_GOAL = help
@@ -22,37 +11,31 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 # renovate: datasource=github-tags depName=kubernetes-sigs/controller-tools extractVersion=^envtest-(?<version>v\d+\.\d+\.\d+)$
-ENVTEST_K8S_VERSION = 1.35.0
-
-.PHONY: install-tools
-install-tools: ## Install all tools
-	cd internal/tools && cat tools.go | grep _ | awk -F'"' '{print $$2}' | GOBIN="$(LOCALBIN)" xargs -tI % go install -mod=mod %
 
 .PHONY: manifests
-manifests: install-tools
+manifests:
 	controller-gen rbac:roleName=ivu-manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
-generate: install-tools
+generate:
 	controller-gen object paths=./...
 
 .PHONY: test 
 test: manifests generate ## Run the tests 
-	 go test -v ./...
+	KUBEBUILDER_ASSETS=$(KUBEBUILDER_PATH) go test -v ./...
 
 .PHONY: test-short
 test-short:  ## Skips slow integration tests
 	go test -v ./... -short
 
 .PHONY: clean
-clean: install-tools ## Clean up envtest binaries
-	setup-envtest cleanup --bin-dir "$(LOCALBIN)"
-	rm -rf $(LOCALBIN)
+clean: ## Clean up envtest binaries
+	setup-envtest cleanup
 
 .PHONY: lint
-lint: install-tools ## Run linter
+lint: ## Run linter
 	golangci-lint run
 
 .PHONY: fmt
-fmt: install-tools ## Run format
+fmt: ## Run format
 	golangci-lint fmt
