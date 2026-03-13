@@ -3,3 +3,36 @@ go = "1.26.1"
 "go:sigs.k8s.io/controller-tools/cmd/controller-gen" = "0.20.1"
 golangci-lint = "2.11.3"
 setup-envtest = "0.23.3"
+
+[tasks.lint]
+description  = 'lint code'
+run = "golangci-lint run"
+
+[tasks.fmt]
+description  = 'format code'
+run = "golangci-lint fmt"
+
+[tasks.test]
+description = 'runs all tests'
+env = { ENVTEST_K8S_VERSION = '1.35.0' }
+depends = ['generate', 'manifests']
+run = '''
+export KUBEBUILDER_ASSETS=$(setup-envtest use $ENVTEST_K8S_VERSION -i -p path)
+go test -v ./...
+'''
+
+[tasks.short-test]
+description = 'runs tests without slow integration tests'
+run = 'go test -v ./... -short'
+
+[tasks.clean]
+description = 'deletes setup-envtest artifacts'
+run = 'setup-envtest cleanup'
+
+[tasks.generate]
+hide = true
+run = 'controller-gen object paths=./...'
+
+[tasks.manifests]
+hide = true
+run = 'controller-gen rbac:roleName=ivu-manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases'
