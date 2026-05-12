@@ -2,7 +2,7 @@
 go = "1.26.1"
 "go:sigs.k8s.io/controller-tools/cmd/controller-gen" = "0.20.1"
 golangci-lint = "2.11.3"
-setup-envtest = "0.23.3"
+setup-envtest = "0.24.1"
 
 [tasks.lint]
 description  = 'lint code'
